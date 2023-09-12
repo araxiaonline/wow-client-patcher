@@ -1,0 +1,196 @@
+/*
+ * @NOTE: Prepend a `~` to css file paths that are in your node_modules
+ *        See https://github.com/webpack-contrib/sass-loader#imports
+ */
+body {
+  position: relative;
+  color: white;
+  height: 100vh;
+  background: linear-gradient(
+    200.96deg,
+    #fedc2a -29.09%,
+    #dd5789 51.77%,
+    #7a2c9e 129.35%
+  );
+  background-image: url('../../assets/wow-lich-bg.jpeg');
+  background-size: auto 100%;
+  /* background-repeat: no-repeat; */
+  /* font-family: Segoe UI, Frutiger, Dejavu Sans, Helvetica Neue, Arial, sans-serif; */
+  font-family: 'Roboto', sans-serif;
+  font-weight: 00;
+  overflow-y: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  animation: moveBackground 75s linear infinite alternate;
+}
+
+/* .eyes {
+  position: absolute;
+  top: 18.5%;
+  left: 20%;
+  transform: translate(-50%, -50%);
+  width: 10px;
+  height: 5px;
+  border-radius: 70%;
+  background-color: rgba(32, 224, 247, 1);
+  box-shadow: 0 0 20px 10px rgba(32, 224, 247, 0.8);
+  animation: eyesAnimation 75s linear infinite, glowAnimation 2.0s ease-in-out infinite alternate;
+} */
+
+@keyframes moveBackground {
+0% {
+  background-position: 0% 0;
+}
+100% {
+  background-position: 70% 0;
+}
+}
+
+/* @keyframes eyesAnimation {
+  0% {
+    left: 10%;
+  }
+  50% {
+    left: 50%;
+  }
+  100% {
+    left: 65%;
+  }
+} */
+
+@keyframes glow {
+  0% {
+    box-shadow: 0 0 120px 5px rgba(32, 224, 247, 0.3);
+  }
+  100% {
+    box-shadow: 0 0 90px 40px rgba(32, 224, 247, 1); /* Increased glow effect */
+  }
+}
+
+button {
+  background-color: rgb(15, 27, 72, 0.86);
+  padding: 10px 10px;
+  border-radius: 5px;
+  width: 150px;
+  border: none;
+  margin-left: 15px;
+  appearance: none;
+  color: white;
+  font-size: 1.2rem;
+  box-shadow: 0px 8px 28px -6px rgba(87, 120, 196, 0.587),
+    0px 18px 88px -4px rgba(24, 39, 75, 0.14);
+  transition: all ease-in 0.1s;
+  cursor: pointer;
+  opacity: 0.85;
+}
+
+button:hover {
+  transform: scale(1.05);
+  opacity: 1;
+  background-color: rgba(25, 172, 185, 0.86);
+  box-shadow: 10px 45px 35px rgba(10, 10, 9, 0.25);
+
+}
+
+li {
+  list-style: none;
+}
+
+a {
+  text-decoration: none;
+  height: fit-content;
+  width: fit-content;
+  margin: 10px;
+}
+
+a:hover {
+  opacity: 1;
+  text-decoration: none;
+}
+
+.flexbox {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: absolute;
+  bottom: 4%;
+  left:80%;
+}
+
+.wowlogo {
+  margin-top: -100px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 20px 0;
+  filter: brightness(10000%) invert(100%) sepia(0%) saturate(0%);
+}
+
+.snowfall {
+  position: 'absolute';
+  top: 0;
+  left: 0;
+  width: '100vw';
+  height: '100vh';
+  background: 'rgba(0, 0, 0, 0.10)';
+}
+
+.versionText h3 {
+  text-align: right!important;
+  /* width: 95%; */
+  padding: 5px;
+  margin-top: 5px;
+  margin-right: 10px;
+  font-size: 18px;
+  font-weight: 300;
+  /* letter-spacing: 1px; */
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+h3 {
+  margin:4px;
+}
+
+.latest {
+  color: rgba(30,250,80,100);
+}
+
+.overlay {
+  position: relative;
+  /* top: 0; */
+  /* left: 0; */
+  width: 100%;
+  /* height: 100%; */
+  background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent black overlay */
+  border-radius: 0.5em;
+  padding: 0.1em 10px 5px 10px;
+  /* opacity: 0.5; Adjust the opacity as needed */
+  pointer-events: none; /* Allows clicks to pass through the overlay */
+}
+
+.action-install {
+  width: 100px;
+}
+
+
+.container {
+  margin-top: 10px;
+  display: flex;
+  padding: 10px;
+  height: 35px;
+}
+
+.left-content {
+  flex: 75%;
+}
+
+.right-content {
+  flex: 35%;
+  text-align: right;
+  padding-top: 16px;
+  font-size: 15px;
+}
+.new {
+  color: #fedc2a;
+  font-weight: 600;
+}

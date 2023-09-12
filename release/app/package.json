@@ -1,0 +1,18 @@
+{
+  "name": "wow-client-updater",
+  "version": "1.0.0",
+  "description": "Custom Wow Client Patcher for Private WoW Servers",
+  "license": "MIT",
+  "author": {
+    "name": "Ben Carter",
+    "email": "ben.carter.dev@gmail.com",
+    "url": "https://github.com/electron-react-boilerplate"
+  },
+  "main": "./dist/main/main.js",
+  "scripts": {
+    "rebuild": "node -r ts-node/register ../../.erb/scripts/electron-rebuild.js",
+    "postinstall": "npm run rebuild && npm run link-modules",
+    "link-modules": "node -r ts-node/register ../../.erb/scripts/link-modules.ts"
+  },
+  "dependencies": {}
+}

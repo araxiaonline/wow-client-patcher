@@ -1,0 +1,56 @@
+/* BadgeList.css */
+
+.badge-list {
+  display: flex;
+  /* flex-direction: column; */
+  gap: 5px;
+  margin-top: -9px;
+}
+
+.badge-row {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  justify-content: space-between;
+  gap: 5px;
+}
+
+.badge-item {
+  display: flex;
+  align-items: center;
+  width: 145px; /* Fixed width */
+  height: 40px; /* Fixed height */
+  background-color: rgba(233, 233, 235, 0.2);
+  border-radius: 5px;
+  margin-left: 5px;
+
+  /* padding: 5px 10px; */
+}
+
+.badge-item .badge {
+  width: 24%;
+  height: 100%;
+  border-radius: 0;
+  margin-right: 10px;
+  text-align: center;
+  font-weight: bold;
+  font-size: 18px;
+  line-height: 40px;
+}
+
+.badge-item .badge-text {
+  /* background-color: rgba(255, 255, 255, 0.8); */
+  padding: -4px;
+  font-size: 16px;
+  /* border-radius: 15px; */
+}
+
+.green {
+  background-color: rgb(22, 120, 22);
+  color: rgb(255, 255, 255);
+}
+
+.red {
+  background-color: rgba(166, 3, 3, 0.65);
+  color: white;
+}
