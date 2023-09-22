@@ -17,10 +17,10 @@ import { app, BrowserWindow, shell, ipcMain, globalShortcut } from 'electron';
 import log from 'electron-log';
 // import MenuBuilder from './menu';
 import { resolveHtmlPath } from './util';
-import FileManager from './FileManager';
+import FileManager from './libs';
 
 // Types
-import Channels from '../enums';
+import Channels from '../constants';
 
 // class AppUpdater {
 //   constructor() {
@@ -40,8 +40,15 @@ let mainWindow: BrowserWindow | null = null;
 let appPath: string;
 let fileManager: FileManager;
 if (process.platform === 'win32') {
-  appPath = path.join(process.env.PORTABLE_EXECUTABLE_DIR || '', 'Wow.exe');
-  fileManager = new FileManager(process.env.PORTABLE_EXECUTABLE_DIR || '');
+  if(process.env.PORTABLE_EXECUTABLE_DIR) {
+    appPath = path.join(process.env.PORTABLE_EXECUTABLE_DIR, 'Wow.exe')
+    fileManager = new FileManager(process.env.PORTABLE_EXECUTABLE_DIR || '')
+  } else {
+    appPath = path.join(__dirname, '../../mockGame','Wow.exe');
+    fileManager = new FileManager(path.join(__dirname, '../../mockGame'));
+  }
+
+
 } else {
   appPath = '/System/Applications/Chess.app';
   fileManager = new FileManager(path.join(__dirname, '../../dist/')); // will handle macs even though we will never be building for one.
@@ -51,16 +58,22 @@ if (process.platform === 'win32') {
  * This will return all the information of the file system installed in the directory.
  */
  ipcMain.handle(Channels.APP_INFO, async () => {
-  return {
+  const appInfo = {
     version: '3.3.5 (v1)',
     credits: 'ben-of-codecraft',
     lastupdate: '2023-09-03',
     execpath: process.env.PORTABLE_EXECUTABLE_DIR,
     HD: await fileManager.IsHDSetup(),
     HDExtra: await fileManager.IsHDExtraSetup(),
-    Features: await fileManager.IsFeaturesSetup(),
+    Misc: await fileManager.IsMiscSetup(),
     Araxia: await fileManager.IsAraxiaSetup(),
+    WoWInstalled: await fileManager.IsWoWInstalled(),
+    WoWPatched: await fileManager.IsWoWPatched(),
+    AIOInstalled: await fileManager.IsAIOInstalled(),
   };
+
+  console.log('App Info: ', appInfo);
+  return appInfo;
 });
 
 
@@ -137,8 +150,8 @@ const createWindow = async () => {
 
   mainWindow = new BrowserWindow({
     show: false,
-    width: 1024,
-    height: 728,
+    width: 1280,
+    height: 720,
     icon: getAssetPath('wothlk.ico'),
     webPreferences: {
       preload: app.isPackaged
