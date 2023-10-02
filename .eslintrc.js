@@ -20,6 +20,7 @@ module.exports = {
     'object-curly-spacing': 'off',
     'no-multiple-empty-lines': 'off',
     'lines-between-class-members': 'off',
+    'no-restricted-syntax': 'off',
   },
   parserOptions: {
     ecmaVersion: 2020,
