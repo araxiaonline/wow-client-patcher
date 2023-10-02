@@ -28,4 +28,9 @@ npm-debug.log.*
 *.sass.d.ts
 *.scss.d.ts
 
-.dist/*
+dist/**/*
+mockGame/**/*
+release/**/*
+dist/**/*
+
+.assets/**/*
