@@ -33,4 +33,5 @@ mockGame/**/*
 release/**/*
 dist/**/*
 
-.assets/**/*
+assets/**/*
+extraResources/**/*
