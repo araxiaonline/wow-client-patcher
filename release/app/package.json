@@ -5,8 +5,7 @@
   "license": "MIT",
   "author": {
     "name": "Ben Carter",
-    "email": "ben.carter.dev@gmail.com",
-    "url": "https://github.com/electron-react-boilerplate"
+    "email": "ben.carter.dev@gmail.com"
   },
   "main": "./dist/main/main.js",
   "scripts": {
