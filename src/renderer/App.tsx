@@ -1,8 +1,8 @@
 /* eslint global-require: off, no-console: off, promise/always-return: off */
 import { MemoryRouter as Router, Routes, Route } from 'react-router-dom';
 import React, { useEffect, useState } from 'react';
+import  throttle from 'lodash/throttle';
 /* eslint-disable */
-import Snowfall from 'react-snowfall';
 
 // Assets
 import './App.css';
@@ -31,6 +31,7 @@ import LinearProgress, { LinearProgressProps } from '@mui/material/LinearProgres
 // App Components
 import VersionText from './VersionText';
 import LaunchButton from './LaunchButton';
+import Snowfall from 'react-snowfall';
 
 // Configuration variables
 import  config from '../main/config.json';
@@ -40,6 +41,7 @@ export type VersionStamp = {
   newVersion: string,
   oldVersion: string
 };
+
 
 declare const window: Window;
 
@@ -110,14 +112,15 @@ function WoWClientPatcher() {
       batchStart: (data) => {
         setIsDownloading(true);
       },
-      batchData: (data) => {
+      batchData: throttle((data: any) => {
         setIsDownloading(true);
         setDownloadProgress(Math.floor(data.percentage));
-      },
+      }, 300),
       batchEnd: (data) => {
-        setIsDownloading(false);
-        setDownloadProgress(0);
         setTimeout(() => {
+          setIsDownloading(false);
+
+          setDownloadProgress(0);
           updateAppInfo();
         }, 300);
       }
