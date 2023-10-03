@@ -11,16 +11,20 @@
 import path from 'path';
 import * as fs from 'fs';
 import { spawn } from 'child_process';
-
-import { app, BrowserWindow, shell, ipcMain, globalShortcut } from 'electron';
-// import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
-// import MenuBuilder from './menu';
-import { resolveHtmlPath } from './util';
-import FileManager from './libs';
+import { app, BrowserWindow, shell, ipcMain, globalShortcut } from 'electron';
 
-// Types
-import Channels from '../constants';
+// Typings, Interfaces, and Constants
+import { LauncherServer } from 'typings';
+import Downloader from './libs/Downloader';
+import { Channels } from '../constants';
+
+// import { autoUpdater } from 'electron-updater';
+import MenuBuilder from './menu';
+import { resolveHtmlPath } from './util';
+import FileManager from './libs/FileManager';
+
+const showdown = require('showdown');
 
 // class AppUpdater {
 //   constructor() {
@@ -32,113 +36,14 @@ import Channels from '../constants';
 
 let mainWindow: BrowserWindow | null = null;
 
-/**
- * Server Preload Events to gather information about the environment before the UI launches
- */
-
-// loads the application path where the exe is run, this is needed to lookup information about the installed patches.
-let appPath: string;
-let fileManager: FileManager;
-if (process.platform === 'win32') {
-  if(process.env.PORTABLE_EXECUTABLE_DIR) {
-    appPath = path.join(process.env.PORTABLE_EXECUTABLE_DIR, 'Wow.exe')
-    fileManager = new FileManager(process.env.PORTABLE_EXECUTABLE_DIR || '')
-  } else {
-    appPath = path.join(__dirname, '../../mockGame','Wow.exe');
-    fileManager = new FileManager(path.join(__dirname, '../../mockGame'));
-  }
-
-
-} else {
-  appPath = '/System/Applications/Chess.app';
-  fileManager = new FileManager(path.join(__dirname, '../../dist/')); // will handle macs even though we will never be building for one.
-}
-
-/**
- * This will return all the information of the file system installed in the directory.
- */
- ipcMain.handle(Channels.APP_INFO, async () => {
-  const appInfo = {
-    version: '3.3.5 (v1)',
-    credits: 'ben-of-codecraft',
-    lastupdate: '2023-09-03',
-    execpath: process.env.PORTABLE_EXECUTABLE_DIR,
-    HD: await fileManager.IsHDSetup(),
-    HDExtra: await fileManager.IsHDExtraSetup(),
-    Misc: await fileManager.IsMiscSetup(),
-    Araxia: await fileManager.IsAraxiaSetup(),
-    WoWInstalled: await fileManager.IsWoWInstalled(),
-    WoWPatched: await fileManager.IsWoWPatched(),
-    AIOInstalled: await fileManager.IsAIOInstalled(),
-  };
-
-  console.log('App Info: ', appInfo);
-  return appInfo;
-});
-
-
-ipcMain.on(Channels.WOW_LAUNCH, (event, arg) => {
-  if (!fs.existsSync(appPath)) {
-    event.reply(Channels.WOW_LAUNCH_ERROR, {
-      type: 'FileError',
-      message: `WoW application not found or permissions are not set to readable: ${appPath}`,
-    } as ErrorEvent);
-  }
-
-  let childProcess;
-  if (process.platform === 'darwin') {
-    childProcess = spawn('open', [appPath]);
-  } else {
-    childProcess = spawn(appPath);
-  }
-
-  childProcess.on('close', (code) => {
-    console.info(`WoW client exited with code: ${code}`);
-  });
-
-  childProcess.on('exit', () => {
-    console.info('WoW client exited');
-  });
-
-  childProcess.on('exit', () => {
-    console.info('Child process is launched closing window');
-    // event.reply(Channels.WOW_CLIENT_EXIT);
-    mainWindow?.close();
-  });
-
-  mainWindow?.close();
-});
-
-
 if (process.env.NODE_ENV === 'production') {
   const sourceMapSupport = require('source-map-support');
   sourceMapSupport.install();
 }
 
-const isDebug =
-  process.env.NODE_ENV === 'development' || process.env.DEBUG_PROD === 'true';
-
-// if (isDebug || true) {
-//   require('electron-debug')();
-// }
-
-// const installExtensions = async () => {
-//   const installer = require('electron-devtools-installer');
-//   const forceDownload = !!process.env.UPGRADE_EXTENSIONS;
-//   const extensions = ['REACT_DEVELOPER_TOOLS'];
-
-//   return installer
-//     .default(
-//       extensions.map((name) => installer[name]),
-//       forceDownload
-//     )
-//     .catch(console.log);
-// };
+const isDebug = process.env.NODE_ENV === 'development' || process.env.DEBUG_PROD === 'true';
 
 const createWindow = async () => {
-  if (isDebug) {
-    // await installExtensions();
-  }
 
   const RESOURCES_PATH = app.isPackaged
     ? path.join(process.resourcesPath, 'assets')
@@ -157,7 +62,8 @@ const createWindow = async () => {
       preload: app.isPackaged
         ? path.join(__dirname, 'preload.js')
         : path.join(__dirname, '../../.erb/dll/preload.js'),
-      nodeIntegration: true,
+        nodeIntegration: false,
+        sandbox: false
     },
   });
 
@@ -178,8 +84,9 @@ const createWindow = async () => {
     mainWindow = null;
   });
 
-  // const menuBuilder = new MenuBuilder(mainWindow);
-  // menuBuilder.buildMenu();
+
+  const menuBuilder = new MenuBuilder(mainWindow);
+  menuBuilder.buildMenu();
 
   // Open urls in the user's browser
   mainWindow.webContents.setWindowOpenHandler((edata) => {
@@ -219,3 +126,187 @@ app
     });
   })
   .catch(console.log);
+
+  /** ************************************************
+   * Event Management for IPC
+   ************************************************* */
+// loads the application path where the exe is run, this is needed to lookup information about the installed patches.
+let appPath: string;
+let fileManager: FileManager;
+
+if (process.platform === 'win32') {
+  if(process.env.PORTABLE_EXECUTABLE_DIR) {
+    appPath = path.join(process.env.PORTABLE_EXECUTABLE_DIR, 'Wow.exe')
+    fileManager = new FileManager(process.env.PORTABLE_EXECUTABLE_DIR || '')
+  } else {
+    appPath = path.join(__dirname, '../../mockGame','Wow.exe');
+    fileManager = new FileManager(path.join(__dirname, '../../mockGame'));
+  }
+
+} else {
+  appPath = '/System/Applications/Chess.app';
+  fileManager = new FileManager(path.join(__dirname, '../../dist/')); // will handle macs even though we will never be building for one.
+}
+/**
+ * This will return all the information of the file system installed in the directory.
+ */
+ ipcMain.handle(Channels.APP_INFO, async () => {
+  const version = await fileManager.GetVersion();
+
+  // Get the news and convert it to html
+  const news = await fileManager.GetLatestNews();
+  const converter = new showdown.Converter();
+  const newHtml = converter.makeHtml(news);
+  const remoteInfo = await fileManager.GetRemoteVersion();
+  const localInfo = await fileManager.GetVersion();
+
+  const appInfo = {
+    Version: localInfo.Version,
+    LastUpdate: localInfo.LastUpdate,
+    ExecPath: process.env.PORTABLE_EXECUTABLE_DIR,
+    HD: await fileManager.IsHDSetup(),
+    Misc: await fileManager.IsMiscSetup(),
+    WoWInstalled: await fileManager.IsWoWInstalled(),
+    WoWPatched: await fileManager.IsWoWPatched(),
+    AIOInstalled: await fileManager.IsAIOInstalled(),
+    LatestNews: newHtml,
+    RemoteVersion: remoteInfo[0]?.version,
+  };
+  return appInfo;
+});
+
+(async () => {
+
+  // const remoteInfo = await fileManager.GetRemoteVersion();
+  // const custom = await fileManager.GetCustomFiles();
+  // console.log(custom);
+
+})();
+
+
+
+/**
+ * We have to redirect events from the main process to the render process as they are fired this allows the
+ * frontend to attach the backend event listeners, complex objects can not be handled by ipcRenderer.
+ * @param downloader
+ */
+function passthrough(downloader: Downloader) {
+
+  downloader.on('start', (event) => {
+    try {
+      mainWindow?.webContents.send(Channels.DOWNLOAD_START, {
+        totalBytes: event.totalBytes,
+        remoteFile: event.remoteFile
+      });
+    } catch (error: any) {
+      console.log(error.message);
+    }
+
+  });
+  downloader.on('data', (event) => {
+    mainWindow?.webContents.send(Channels.DOWNLOAD_PROGRESS, event);
+  });
+  downloader.on('end', (event) => {
+    mainWindow?.webContents.send(Channels.DOWNLOAD_END, event);
+  });
+  downloader.on('batchStart', (event) => {
+    mainWindow?.webContents.send(Channels.DOWNLOAD_BATCH_START, event);
+  });
+  downloader.on('batchData', (event) => {
+      mainWindow?.webContents.send(Channels.DOWNLOAD_BATCH_DATA, event);
+  });
+  downloader.on('batchEnd', (event) => {
+    mainWindow?.webContents.send(Channels.DOWNLOAD_BATCH_END, event);
+  });
+}
+
+/**
+ * Main Calls to backend Filemanager
+ */
+ipcMain.handle(Channels.APP_API, async (event, method: LauncherServer.Methods, ...args)  => {
+
+  switch (method) {
+    case 'GetInstalledPatches': {
+      // return await fileManager.GetInstalledPatches(args[0]);
+      break;
+    }
+    case 'InstallAIO': {
+      const result = await fileManager.InstallAIO();
+
+      if(result instanceof Downloader) {
+         passthrough(result);
+      }
+      break;
+    }
+    case 'PatchWow': {
+      const result = await fileManager.PatchWowExe();
+      return true;
+    }
+
+    case 'InstallHD': {
+      const result = await fileManager.InstallPatches('hd');
+
+      if(result instanceof Downloader) {
+        passthrough(result);
+      }
+      break;
+    }
+    case 'InstallMisc': {
+      const result = await fileManager.InstallPatches('misc');
+
+      if(result instanceof Downloader) {
+        passthrough(result);
+      }
+      break;
+    }
+    case 'InstallUpdates': {
+      const result = await fileManager.InstallUpdates();
+
+      if(result instanceof Downloader) {
+        passthrough(result);
+      }
+      break;
+    }
+    default:
+      log.error(`Unknown method: ${method}`);
+      break;
+
+  }
+
+  return null;
+});
+
+
+ipcMain.on(Channels.WOW_LAUNCH, (event, arg) => {
+  if (!fs.existsSync(appPath)) {
+    event.reply(Channels.WOW_LAUNCH_ERROR, {
+      type: 'FileError',
+      message: `WoW application not found or permissions are not set to readable: ${appPath}`,
+    } as ErrorEvent);
+    console.error(`WoW application not found or permissions are not set to readable: ${appPath}`);
+  }
+
+  if(!app.isPackaged) {
+    // appPath = "C:\\Users\\benca\\Desktop\\WoW\\WorldOfWarcraft_3.3.5a-unpatched\\Wow.exe";
+  }
+
+  console.log(`Launching WoW client: ${appPath}`);
+  const childProcess = spawn(appPath, {
+    detached: true
+  });
+
+  childProcess.on('close', (code) => {
+    console.info(`WoW client exited with code: ${code}`);
+  });
+
+  childProcess.on('error', (err) => {
+    console.log(err);
+  });
+
+  setTimeout(() => {
+    mainWindow?.close();
+  }, 1000);
+
+});
+
+

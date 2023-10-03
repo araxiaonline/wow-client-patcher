@@ -1,23 +1,86 @@
 /* eslint-disable no-console */
 import { contextBridge, ipcRenderer } from 'electron';
-import log from 'electron-log';
-import Channels from '../constants';
-import { LauncherServer } from '../typings';
+import { Channels } from '../constants';
+import { LauncherServer, DownloadCallbacks } from '../typings';
 
+function apiCaller(method: LauncherServer.Methods, ...args: any[]): Promise<any>{
+  return ipcRenderer.invoke(Channels.APP_API, method, ...args);
+}
+
+/**
+ * Wrapper around the ipcRenderer to handle the download events
+ * Since you can not
+ * ss complex object through the IPC Channel this is used
+ * to relay the results of downloads happening on the server to the renderer.
+ *
+ * Every download that is requested by the users will track status on these channels.
+ */
+class DownloadListener {
+     constructor(callbacks: DownloadCallbacks) {
+
+      ipcRenderer.on(Channels.DOWNLOAD_START, (event, args ) => {
+        callbacks.start?.({
+          totalBytes: args.total,
+          remoteFile: args.files
+        });
+      });
+
+      ipcRenderer.on(Channels.DOWNLOAD_END, (event, args ) => {
+        callbacks.end?.(args);
+      });
+
+      ipcRenderer.on(Channels.DOWNLOAD_PROGRESS, (event, args ) => {
+        callbacks.data?.(args);
+      });
+
+      ipcRenderer.on(Channels.DOWNLOAD_BATCH_START, (event, args ) => {
+        callbacks.batchStart?.(args);
+      });
+
+      ipcRenderer.on(Channels.DOWNLOAD_BATCH_END, (event, args ) => {
+        callbacks.batchEnd?.(args);
+      });
+
+      ipcRenderer.on(Channels.DOWNLOAD_BATCH_DATA, (event, args ) => {
+        callbacks.batchData?.(args);
+      });
+    }
+}
+
+const handleInstall = async (apiMethodName: LauncherServer.Methods, callbacks: DownloadCallbacks) => {
+  // this registers callbacks on the object
+  const downloadListener = new DownloadListener(callbacks);
+
+  try {
+    await apiCaller(apiMethodName);
+  } catch (error: any) {
+    const msg = `Install Error: getting install details: ${error.message}`;
+
+    return {
+      type: 'Install',
+      message: msg,
+    } as ErrorEvent;
+  }
+  return null;
+};
+
+/**
+ * All the API's exposed to the renderer process
+ */
 const IPCApi: LauncherServer.Api = {
   Launch: () => {
-    console.info('Launching WoW client');
     ipcRenderer.send(Channels.WOW_LAUNCH);
   },
 
   OnExitApp: (handler) => {
     ipcRenderer.on(Channels.WOW_CLIENT_EXIT, handler);
   },
+
   OnLaunchError: (handler) => {
     ipcRenderer.on(
       Channels.WOW_LAUNCH_ERROR,
       (event: any, error: ErrorEvent) => {
-        log.info(
+        console.info(
           `WoW client exited with Error: [${error.type}]: ${error.message}`
         );
         handler(event, error);
@@ -31,7 +94,7 @@ const IPCApi: LauncherServer.Api = {
       return appInfo;
     } catch (error: any) {
       const msg = `Error getting app info: ${error}`;
-      log.error(msg);
+      console.error(msg);
 
       return {
         type: 'Parse',
@@ -49,13 +112,32 @@ const IPCApi: LauncherServer.Api = {
       return installDetails;
     } catch (error: any) {
       const msg = `Error getting install details: ${error}`;
-      log.error(msg);
+      console.error(msg);
 
       return {
         type: 'Parse',
         message: msg,
       } as ErrorEvent;
     }
+  },
+  InstallStore: async (callbacks: DownloadCallbacks) => {
+    await handleInstall('InstallAIO', callbacks);
+  },
+
+  PatchWoW: async () => {
+    await handleInstall('PatchWow', {});
+  },
+
+  InstallHD: async (callbacks: DownloadCallbacks) => {
+    await handleInstall('InstallHD', callbacks);
+  },
+
+  InstallMisc: async (callbacks: DownloadCallbacks) => {
+    handleInstall('InstallMisc', callbacks);
+  },
+
+  InstallUpdates: async (callbacks: DownloadCallbacks) => {
+    handleInstall('InstallUpdates', callbacks);
   }
 
 };

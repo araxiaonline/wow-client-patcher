@@ -11,3 +11,12 @@ export function resolveHtmlPath(htmlFileName: string) {
   }
   return `file://${path.resolve(__dirname, '../renderer/', htmlFileName)}`;
 }
+
+export function byteToMbs(bytes: number): number {
+  return +(bytes/1024/1024).toFixed(2);
+}
+
+// Removes double quotes on ETags from S3
+export function santizeETag(tag: string): string {
+  return tag.replace(/"/g, '');
+}

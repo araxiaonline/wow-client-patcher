@@ -1,4 +1,5 @@
 import { IpcRendererEvent } from 'electron';
+import { DownloadEventMap } from 'main/libs/Downloader';
 
 declare global {
   /**
@@ -10,15 +11,11 @@ declare global {
   }
 }
 
-/**
- * Used to delcare file types to TypeScript that are not modules
- */
-declare module '*.png';
-declare module '*.jpeg';
-declare module '*.mp3' {
-  const value: any;
-  export default value;
-}
+type Callbacks<T> = {
+  [K in keyof T]?: (params: T[K]) => void;
+};
+
+export type DownloadCallbacks = Callbacks<DownloadEventMap>;
 
 declare namespace WowLauncher {
   /*
@@ -28,55 +25,57 @@ declare namespace WowLauncher {
     /**
      * The current version of the application.
      */
-    version: string;
-    /**
-     * Contributors to the application and their contributions.
-     */
-    credits: string;
+    Version: string;
+
     /**
      * The last time the application was updated.
      */
-    lastupdate: string;
+    LastUpdate: string;
     /**
      * The original path to the executable of the application. This is different
      * than a potentially temporary path where the actual exe runs; this is the directory
      * where the exe is located. This is used to communicate with the external WoW exe
      * and collect information about the installed WoW client.
      */
-    execpath: string;
-    /**
-     * Manifest of files on host machine
-     */
-    manifest: Manifest;
-
+    ExecPath: string;
     /**
      * Whether or not the HD patch is installed.
      */
     HD: boolean;
-    /**
-     * Whether or not the HD Extra patch is installed.
-     */
-    HDExtra: boolean;
+
     /**
      * Whether or not the Fearure patches are installed
      */
-    Features: boolean;
+    Misc: boolean;
     /**
      * Whether or not Araxia patches are installed.
      */
     Araxia: boolean;
-  }
 
-  interface Manifest {
     /**
-     * List of files currently present on the user's machine that are not part of the vanilla installation.
-     * from ChromieCraft. <https://www.chromiecraft.com/en/downloads/>
+     * Whether or not the WoW client is installed.
      */
-    patchfiles: PatchFile[];
+    WoWInstalled: boolean;
+
     /**
-     * Last time the manifest was updated.
+     * Whether or not the WoW client is patched.
      */
-    lastupdate: string;
+    WoWPatched: boolean;
+
+    /**
+     * Whether or not the AIO patch is installed.
+     */
+    AIOInstalled: boolean;
+
+    /**
+     * The latest news about the application.
+     */
+    LatestNews: string;
+
+    /**
+     * The remote version of the client.
+     */
+    RemoteVersion: string;
   }
 
   interface PatchFile {
@@ -120,6 +119,45 @@ declare namespace LauncherServer {
      * If not detected, the version returned is "3.3.5a-v0" (the base version of the client).
      */
     GetAppInfo: () => Promise<WowLauncher.AppInfo | null>;
+
+    /**
+     * Patches the server Wow.exe with the patched version if needed.
+     */
+    PatchWoW: () => void;
+
+    /**
+     * Returns the list of files that are currently installed on the user's machine.
+     */
+    GetInstalledPatches(type: string): Promise<WowLauncher.PatchFile[] | null>;
+
+    /**
+     *
+     * @param callbacks Installs addon required to login to the store.
+     * @returns
+     */
+    InstallStore: (callbacks: any) => void;
+
+    /**
+     * Install HD patches from server
+     * @param callbacks
+     * @returns
+     */
+    InstallHD: (callbacks: any) => void;
+
+    /**
+     * Installs Misc patches from server
+     * @param callbacks
+     * @returns
+     */
+    InstallMisc: (callbacks: any) => void;
+
+    /**
+     * Installs custom content updates from server
+     * @param callbacks
+     * @returns
+     */
+    InstallUpdates: (callbacks: any) => void;
+
   }
 
   /**
@@ -136,35 +174,34 @@ declare namespace LauncherServer {
     type: 'File' | 'Request' | 'Generic' | 'Parse';
     message: string;
   }
+
+  type Methods =
+  'InstallAIO' |
+  'GetInstalledPatches' |
+  'PatchWow' |
+  'InstallHD' |
+  'InstallMisc' |
+  'GetRemoteVersion' |
+  'InstallUpdates';
 }
 
-declare namespace LauncherUI {
+/**
+ * List of files and tags showing last time they were changed. Additionally, this
+ * is used to determine the current version of the client.
+ */
+declare interface Manifest {
   /**
-   * Server response data to server about the latest information about the client patches.
+   * The version the current client with patching
    */
-  interface RemoteServer {
-    /**
-     * Server patch version.
-     */
-    version: string;
-    /**
-     * List of changes made in the patch.
-     */
-    changelog: string[];
-    /**
-     * Date the patch was released.
-     */
-    date: string;
-    /**
-     * Who made the patch.
-     */
-    updatedby: string;
-    /**
-     * List of files that were changed in the patch. That need to be downloaded
-     * and replaced on the client.
-     */
-    filelist: string[];
-  }
+  Version: string;
+  /**
+   * List of files currently present on the user's machine that are not part of the vanilla installation.
+   */
+  Files: Record<string, any>;
+  /**
+   * Last time the manifest was updated.
+   */
+  LastUpdate: string;
 }
 
-export { LauncherServer, LauncherUI, WowLauncher };
+export { LauncherServer, WowLauncher, Manifest };
