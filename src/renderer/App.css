@@ -6,66 +6,72 @@ body {
   position: relative;
   color: white;
   height: 100vh;
-  background: linear-gradient(
-    200.96deg,
-    #fedc2a -29.09%,
-    #dd5789 51.77%,
-    #7a2c9e 129.35%
-  );
   background-image: url('../../assets/wow-lich-bg.jpeg');
   background-size: auto 100%;
   /* background-repeat: no-repeat; */
   /* font-family: Segoe UI, Frutiger, Dejavu Sans, Helvetica Neue, Arial, sans-serif; */
   font-family: 'Roboto', sans-serif;
-  font-weight: 00;
   overflow-y: hidden;
-  display: flex;
   justify-content: center;
   align-items: center;
-  animation: moveBackground 75s linear infinite alternate;
+  filter: brightness(1.05);
+  animation: moveBackground 20s linear infinite alternate;
 }
 
-/* .eyes {
-  position: absolute;
-  top: 18.5%;
-  left: 20%;
-  transform: translate(-50%, -50%);
-  width: 10px;
-  height: 5px;
-  border-radius: 70%;
-  background-color: rgba(32, 224, 247, 1);
-  box-shadow: 0 0 20px 10px rgba(32, 224, 247, 0.8);
-  animation: eyesAnimation 75s linear infinite, glowAnimation 2.0s ease-in-out infinite alternate;
-} */
+body::before {
+  content: "";
+  position: fixed;
+  opacity: 0.85;
+  background-color:rgb(5, 83, 156);
+  background-image: url('../../assets/wow-lich-bg.jpeg');
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center center;
+  z-index: -1;
+  filter: brightness(1.30);
+  animation: moveBackground 20s linear infinite alternate;
+}
 
 @keyframes moveBackground {
-0% {
-  background-position: 0% 0;
-}
-100% {
-  background-position: 70% 0;
-}
-}
-
-/* @keyframes eyesAnimation {
   0% {
-    left: 10%;
-  }
-  50% {
-    left: 50%;
+    background-position: 0% 0;
   }
   100% {
-    left: 65%;
+    background-position: 70% 0;
   }
-} */
+  }
 
-@keyframes glow {
-  0% {
-    box-shadow: 0 0 120px 5px rgba(32, 224, 247, 0.3);
+  @keyframes glow {
+    0% {
+      box-shadow: 0 0 120px 5px rgba(32, 224, 247, 0.3);
+    }
+    100% {
+      box-shadow: 0 0 90px 40px rgba(32, 224, 247, 1); /* Increased glow effect */
+    }
   }
-  100% {
-    box-shadow: 0 0 90px 40px rgba(32, 224, 247, 1); /* Increased glow effect */
-  }
+
+
+p {
+  padding-bottom: 5px;
+  margin-top: 2px;
+}
+
+em {
+  font-size: 14px;
+}
+
+li {
+  list-style:disc;
+}
+
+h3 {
+  margin: 0;
+  font-size: '12px';
+  color: rgb(254,223,164, 1.2);
 }
 
 button {
@@ -93,10 +99,6 @@ button:hover {
 
 }
 
-li {
-  list-style: none;
-}
-
 a {
   text-decoration: none;
   height: fit-content;
@@ -109,6 +111,14 @@ a:hover {
   text-decoration: none;
 }
 
+.wowlogo {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 65px 0 20px 0px;
+  filter: brightness(10000%) invert(100%) sepia(0%) saturate(0%);
+}
+
 .flexbox {
   display: flex;
   justify-content: center;
@@ -118,14 +128,6 @@ a:hover {
   left:80%;
 }
 
-.wowlogo {
-  margin-top: -100px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  margin: 20px 0;
-  filter: brightness(10000%) invert(100%) sepia(0%) saturate(0%);
-}
 
 .snowfall {
   position: 'absolute';
@@ -133,7 +135,7 @@ a:hover {
   left: 0;
   width: '100vw';
   height: '100vh';
-  background: 'rgba(0, 0, 0, 0.10)';
+  background: 'rgba(0, 0, 0, 0.40)';
 }
 
 .versionText h3 {
@@ -147,25 +149,76 @@ a:hover {
   /* letter-spacing: 1px; */
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
-h3 {
-  margin:4px;
-}
 
 .latest {
   color: rgba(30,250,80,100);
 }
 
+::-webkit-scrollbar {
+  width: 5px;
+}
+
+::-webkit-scrollbar-track {
+  -webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.3);
+  -webkit-border-radius: 4px;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  -webkit-border-radius: 5px;
+  border-radius: 5px;
+  /* background: #BB2020; */
+  background: rgba(87, 120, 196, 0.587);
+  -webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.3);
+}
+
+::-webkit-scrollbar-thumb:window-inactive {
+  /* background: #BB2020; */
+  background: rgba(87, 120, 196, 0.987);
+}
+
 .overlay {
   position: relative;
-  /* top: 0; */
-  /* left: 0; */
   width: 100%;
-  /* height: 100%; */
   background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent black overlay */
   border-radius: 0.5em;
   padding: 0.1em 10px 5px 10px;
-  /* opacity: 0.5; Adjust the opacity as needed */
-  pointer-events: none; /* Allows clicks to pass through the overlay */
+  pointer-events: none;
+  transition: box-shadow 0.3s, background-color 0.3s;
+}
+
+.overlay:hover {
+  box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.7); /* Glow shadow on hover */
+  background-color: rgba(0, 0, 0, 0.7); /* Darken the background on hover */
+}
+
+.overlayContainer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.overlay.error {
+  color: red;
+  width: 80%;
+  background-color: rgba(25,25, 40, 0.85);
+  padding: 20px;
+  text-align: center;
+}
+
+.error h3 {
+  margin: 0;
+  font-size: 1.5em;
+  padding-bottom: 10px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-weight: 600;
+}
+
+.errorDetails {
+  width: 100%;
+
+  color: aliceblue;
+  font-size: large;
 }
 
 .action-install {
@@ -174,9 +227,9 @@ h3 {
 
 
 .container {
-  margin-top: 10px;
+  /* margin-top: 10px; */
   display: flex;
-  padding: 10px;
+  padding: 20px 5px 20px 5px;
   height: 35px;
 }
 
@@ -193,4 +246,17 @@ h3 {
 .new {
   color: #fedc2a;
   font-weight: 600;
+}
+
+.warning {
+  color: #eeff00;
+  font-weight: 600;
+  font-size: inherit;
+}
+
+.updatebtn {
+  background-color: #FF8000;
+}
+.updatebtn:hover {
+  background-color: #FFA500;
 }

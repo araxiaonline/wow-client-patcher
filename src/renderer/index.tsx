@@ -24,10 +24,4 @@ sound.play();
  */
 window.api.OnExitApp(() => {
   sound.stop();
-  console.log('The wow client was closed.');
-});
-
-window.api.OnLaunchError((event, error) => {
-  // eslint-disable-next-line no-template-curly-in-string
-  console.log('The wow client failed to launch. ${error.message}');
 });
