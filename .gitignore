@@ -36,5 +36,4 @@ dist/**/*
 assets/**/*
 extraResources/**/*
 
-src/main/config.js
-src/main/config.old.js
+src/main/config*.json
