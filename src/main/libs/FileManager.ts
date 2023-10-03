@@ -485,7 +485,10 @@ export default class FileManager {
     const inManifest = await this.CheckManifest(AIORemotePath, aioETag);
     const aioClient = path.join(this.addOnsPath, 'AIO_Client/AIO_Client.toc');
 
-    if (!inManifest || !fs.existsSync(aioClient)) {
+    const patchS = await this.downloader.getETag('patches/patch-S.MPQ');
+    const isPatched = await this.CheckManifest('patches/patch-S.MPQ', patchS);
+
+    if (!inManifest || !fs.existsSync(aioClient) || !isPatched) {
       return false;
     }
 
@@ -568,10 +571,12 @@ export default class FileManager {
     // we need a new instances to make sure we pass the correct event handler.
     const downloader = this.DownloaderInstance();
     const aioETag = await this.downloader.getETag(AIORemotePath);
+    const patchSETag = await this.downloader.getETag('patches/patch-S.MPQ');
 
     downloader.on('end', () => {
       // update the manifest file with the new install need some more error handling here
       this.UpdateManifest(AIORemotePath, aioETag);
+      this.UpdateManifest('patches/patch-S.MPQ', patchSETag)
 
       setTimeout(() => {
         const zip = new AdmZip(path.join(this.basePath, AIOLocalPath));
@@ -582,6 +587,8 @@ export default class FileManager {
     if (!(await downloader.downloadFile(AIORemotePath, AIOLocalPath))) {
       log.error('Failed to download AIO');
     }
+
+    await downloader.downloadFile('patches/patch-S.MPQ', 'Data/patch-S.MPQ');
 
     return downloader;
   }
