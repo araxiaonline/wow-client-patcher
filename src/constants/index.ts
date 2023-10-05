@@ -10,6 +10,7 @@ const Channels = {
   DOWNLOAD_BATCH_START: 'download-batch-start',
   DOWNLOAD_BATCH_END: 'download-batch-end',
   DOWNLOAD_BATCH_DATA: 'download-batch-data',
+  GET_UPDATE: 'get-update',
 } as const;
 
 const PLATFORM = {

@@ -1,0 +1,15 @@
+{
+  "versions": [
+    {
+      "version": "v1",
+      "lastupdate": "2023-10-01",
+      "by": "Volek",
+      "files": [
+        {
+          "name": "custom/patch-U.MPQ",
+          "description": "New Custom Items and DBC updates"
+        }
+      ]
+    }
+  ]
+}
