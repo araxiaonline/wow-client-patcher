@@ -27,6 +27,7 @@ import CardActionArea from '@mui/material/CardActionArea';
 import CardActions from '@mui/material/CardActions';
 import Button from '@mui/material/Button';
 import LinearProgress, { LinearProgressProps } from '@mui/material/LinearProgress';
+import { Alert } from '@mui/material';
 
 // App Components
 import VersionText from './VersionText';
@@ -88,18 +89,16 @@ function WoWClientPatcher() {
   }
 
   const installStore = async () => {
-    if(appInfo?.AIOInstalled) {
+    if(appInfo?.AIOInstalled || isDownloading) {
       return;
     }
 
     window.api.InstallStore({
       data: (data) => {
         setIsDownloading(true);
-        setDownloadProgress(Math.floor(data.percentage));
       },
       end: async ({totalBytes, file}) => {
         setIsDownloading(false);
-        setDownloadProgress(0);
 
         setTimeout(() => {
           updateAppInfo();
@@ -111,18 +110,20 @@ function WoWClientPatcher() {
   const batchCallbacks: DownloadCallbacks = {
       batchStart: (data) => {
         setIsDownloading(true);
+        // console.log('start:', data);
       },
       batchData: throttle((data: any) => {
         setIsDownloading(true);
+        // console.log('progress:', data);
         setDownloadProgress(Math.floor(data.percentage));
-      }, 300),
+      }, 500),
       batchEnd: (data) => {
         setTimeout(() => {
           setIsDownloading(false);
 
           setDownloadProgress(0);
           updateAppInfo();
-        }, 300);
+        }, 500);
       }
   };
 
@@ -153,6 +154,9 @@ function WoWClientPatcher() {
     window.api.InstallUpdates(batchCallbacks);
   }
 
+  const getUpdate = () => {
+    window.api.GetUpdate();
+  }
 
   useEffect(() => {
 
@@ -485,6 +489,18 @@ function WoWClientPatcher() {
         versionStamp={versionStamp}
         updater={installUpdates}
         />
+        <br/>
+        <Box sx={{ justifyContent: 'center', textAlign: 'center', justifyItems: 'center'}}>
+      { appInfo?.AppVersion !== appInfo?.LatestAppVersion &&
+        <Alert onClick={getUpdate} sx={{
+          width: '40%',
+          left: '30%',
+          position: 'absolute',
+          backgroundColor: 'rgba(0,0,0,0.70)',
+          color: 'rgba(11,207,247, 1.0)',
+          cursor: 'pointer',
+        }} severity="info">A newer version of this launcher can be download by clicking <b>here</b></Alert> }
+      </Box>
     </Container>
   );
 }

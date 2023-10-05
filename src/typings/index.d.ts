@@ -23,6 +23,16 @@ declare namespace WowLauncher {
    */
   interface AppInfo {
     /**
+     * The current version of the application. It is pulled from the package.json file.
+     */
+    AppVersion: string;
+
+    /**
+     * Latest App Version from Github releases
+     */
+    LatestAppVersion: string;
+
+    /**
      * The current version of the application.
      */
     Version: string;
@@ -157,6 +167,12 @@ declare namespace LauncherServer {
      * @returns
      */
     InstallUpdates: (callbacks: any) => void;
+
+    /**
+     * Returns the latest version of the client from the remote server.
+     * @returns Link to the latest binary of the file
+     */
+    GetUpdate: () => void;
 
   }
 

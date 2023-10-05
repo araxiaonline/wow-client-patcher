@@ -23,16 +23,10 @@ import { Channels } from '../constants';
 import MenuBuilder from './menu';
 import { resolveHtmlPath } from './util';
 import FileManager from './libs/FileManager';
+import AutoUpdate from './libs/AutoUpdate';
+import packjson = require('../../package.json');
 
 const showdown = require('showdown');
-
-// class AppUpdater {
-//   constructor() {
-//     log.transports.file.level = 'info';
-//     autoUpdater.logger = log;
-//     autoUpdater.checkForUpdatesAndNotify();
-//   }
-// }
 
 let mainWindow: BrowserWindow | null = null;
 
@@ -94,22 +88,7 @@ const createWindow = async () => {
     return { action: 'deny' };
   });
 
-  // Remove this if your app does not use auto updates
-  // eslint-disable-next-line
-  // new AppUpdater();
 };
-
-/**
- * Add event listeners...
- */
-
-app.on('window-all-closed', () => {
-  // Respect the OSX convention of having the application in memory even
-  // after all windows have been closed
-  if (process.platform !== 'darwin') {
-    app.quit();
-  }
-});
 
 app
   .whenReady()
@@ -133,6 +112,7 @@ app
 // loads the application path where the exe is run, this is needed to lookup information about the installed patches.
 let appPath: string;
 let fileManager: FileManager;
+const autoUpdater = new AutoUpdate();
 
 if (process.platform === 'win32') {
   if(process.env.PORTABLE_EXECUTABLE_DIR) {
@@ -147,6 +127,8 @@ if (process.platform === 'win32') {
   appPath = '/System/Applications/Chess.app';
   fileManager = new FileManager(path.join(__dirname, '../../dist/')); // will handle macs even though we will never be building for one.
 }
+
+
 /**
  * This will return all the information of the file system installed in the directory.
  */
@@ -159,8 +141,11 @@ if (process.platform === 'win32') {
   const newHtml = converter.makeHtml(news);
   const remoteInfo = await fileManager.GetRemoteVersion();
   const localInfo = await fileManager.GetVersion();
+  const latestAppVersion = await autoUpdater.getLatestVersion();
 
   const appInfo = {
+    AppVersion: `v${packjson.version}`,
+    LatestAppVersion: latestAppVersion,
     Version: localInfo.Version,
     LastUpdate: localInfo.LastUpdate,
     ExecPath: process.env.PORTABLE_EXECUTABLE_DIR,
@@ -172,6 +157,8 @@ if (process.platform === 'win32') {
     LatestNews: newHtml,
     RemoteVersion: remoteInfo[0]?.version,
   };
+
+  console.log(appInfo);
   return appInfo;
 });
 
@@ -183,7 +170,10 @@ if (process.platform === 'win32') {
 
 })();
 
-
+ipcMain.on(Channels.GET_UPDATE, async (event, arg) => {
+  const latestAppVersion = await autoUpdater.getLatestVersion();
+  shell.openExternal(`https://github.com/araxiaonline/wow-client-patcher/releases/tag/${latestAppVersion}`);
+});
 
 /**
  * We have to redirect events from the main process to the render process as they are fired this allows the

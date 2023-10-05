@@ -138,8 +138,11 @@ const IPCApi: LauncherServer.Api = {
 
   InstallUpdates: async (callbacks: DownloadCallbacks) => {
     handleInstall('InstallUpdates', callbacks);
-  }
+  },
 
+  GetUpdate: async () => {
+    ipcRenderer.send(Channels.GET_UPDATE);
+  }
 };
 
 contextBridge.exposeInMainWorld('api', IPCApi);

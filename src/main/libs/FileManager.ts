@@ -5,6 +5,8 @@ import path, { join } from 'path';
 import * as crypto from 'crypto';
 import AdmZip from 'adm-zip';
 import  log from 'electron-log';
+import { Mutex } from 'async-mutex';
+
 import Downloader from './Downloader';
 import { santizeETag } from '../util';
 
@@ -69,6 +71,7 @@ export default class FileManager {
   private manifestFile: string;
   private downloader: Downloader;
   private remoteVersions: Versions = [];
+  private manifestMutex: Mutex = new Mutex();
 
   constructor(basePath: string) {
     // This sets up all local paths for the file manager
@@ -502,21 +505,27 @@ export default class FileManager {
    */
   async GetManifest(): Promise<Manifest> {
     let manifest: Manifest;
-    if (!fs.existsSync(this.manifestFile)) {
-      manifest = {
-        Version: 'v0',
-        LastUpdate: new Date().toISOString(),
-        Files: {},
-      };
 
-      await fs.promises.writeFile(
-        this.manifestFile,
-        JSON.stringify(manifest, null, 2)
-      );
-    } else {
-      manifest = JSON.parse(
-        await fs.promises.readFile(this.manifestFile, 'utf8')
-      ) as Manifest;
+    const release = await this.manifestMutex.acquire();
+    try {
+      if (!fs.existsSync(this.manifestFile)) {
+        manifest = {
+          Version: 'v0',
+          LastUpdate: new Date().toISOString(),
+          Files: {},
+        };
+
+        await fs.promises.writeFile(
+          this.manifestFile,
+          JSON.stringify(manifest, null, 2)
+        );
+      } else {
+        manifest = JSON.parse(
+          await fs.promises.readFile(this.manifestFile, 'utf8')
+        ) as Manifest;
+      }
+    } finally {
+      release();
     }
 
     return manifest;
@@ -539,12 +548,19 @@ export default class FileManager {
    */
   async UpdateManifest(filename: string, tag: string): Promise<void> {
     const manifest = await this.GetManifest();
-    manifest.Files[filename] = santizeETag(tag);
-    manifest.LastUpdate = new Date().toISOString();
-    await fs.promises.writeFile(
-      this.manifestFile,
-      JSON.stringify(manifest, null, 2)
-    );
+
+    const release = await this.manifestMutex.acquire();
+    try {
+      manifest.Files[filename] = santizeETag(tag);
+      manifest.LastUpdate = new Date().toISOString();
+      await fs.promises.writeFile(
+        this.manifestFile,
+        JSON.stringify(manifest, null, 2)
+      );
+    } finally {
+      release();
+    }
+
   }
 
   /**
@@ -553,12 +569,18 @@ export default class FileManager {
   async UpdateLocalVersion() {
     const manifest = await this.GetManifest();
     const remoteVersion = await this.GetRemoteVersion();
-    manifest.Version = remoteVersion[0].version;
-    manifest.LastUpdate = new Date().toISOString();
-    await fs.promises.writeFile(
-      this.manifestFile,
-      JSON.stringify(manifest, null, 2)
-    );
+
+    const release = await this.manifestMutex.acquire();
+    try {
+      manifest.Version = remoteVersion[0].version;
+      manifest.LastUpdate = new Date().toISOString();
+      await fs.promises.writeFile(
+        this.manifestFile,
+        JSON.stringify(manifest, null, 2)
+      );
+    } finally {
+      release();
+    }
   }
 
   /**
@@ -571,26 +593,31 @@ export default class FileManager {
     // we need a new instances to make sure we pass the correct event handler.
     const downloader = this.DownloaderInstance();
     const aioETag = await this.downloader.getETag(AIORemotePath);
-    const patchSETag = await this.downloader.getETag('patches/patch-S.MPQ');
+
+    const downloader2 = this.DownloaderInstance();
 
     downloader.on('end', () => {
       // update the manifest file with the new install need some more error handling here
       this.UpdateManifest(AIORemotePath, aioETag);
-      this.UpdateManifest('patches/patch-S.MPQ', patchSETag)
 
+      downloader2.downloadFile('patches/patch-S.MPQ', 'Data/patch-S.MPQ');
       setTimeout(() => {
         const zip = new AdmZip(path.join(this.basePath, AIOLocalPath));
         zip.extractAllTo(path.join(this.basePath, 'Interface/AddOns'), true);
       }, 250);
     });
 
+    downloader2.on('end', async () => {
+      const patchSETag = await this.downloader.getETag('patches/patch-S.MPQ');
+      this.UpdateManifest('patches/patch-S.MPQ', patchSETag)
+    });
+
+
     if (!(await downloader.downloadFile(AIORemotePath, AIOLocalPath))) {
       log.error('Failed to download AIO');
     }
 
-    await downloader.downloadFile('patches/patch-S.MPQ', 'Data/patch-S.MPQ');
-
-    return downloader;
+    return downloader2;
   }
 
 }
