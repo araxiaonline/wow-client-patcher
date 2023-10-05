@@ -29,13 +29,9 @@ npm-debug.log.*
 *.scss.d.ts
 
 dist/**/*
-mockGame/**/*
 release/**/*
-dist/**/*
 
 assets/**/*
 extraResources/**/*
 
 src/main/config*.json
-assets/**/*.png
-assets/**/*.mp3
