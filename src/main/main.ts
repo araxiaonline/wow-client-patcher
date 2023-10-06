@@ -24,7 +24,6 @@ import MenuBuilder from './menu';
 import { resolveHtmlPath } from './util';
 import FileManager from './libs/FileManager';
 import AutoUpdate from './libs/AutoUpdate';
-import packjson = require('../../package.json');
 
 const showdown = require('showdown');
 
@@ -39,9 +38,12 @@ const isDebug = process.env.NODE_ENV === 'development' || process.env.DEBUG_PROD
 
 const createWindow = async () => {
 
-  const RESOURCES_PATH = app.isPackaged
-    ? path.join(process.resourcesPath, 'assets')
-    : path.join(__dirname, '../../assets');
+let RESOURCES_PATH: string;
+if(app.isPackaged) {
+  RESOURCES_PATH = path.join(process.resourcesPath, 'assets');
+} else {
+  RESOURCES_PATH = path.join(__dirname, '../../assets');
+}
 
   const getAssetPath = (...paths: string[]): string => {
     return path.join(RESOURCES_PATH, ...paths);
@@ -143,8 +145,19 @@ if (process.platform === 'win32') {
   const localInfo = await fileManager.GetVersion();
   const latestAppVersion = await autoUpdater.getLatestVersion();
 
+  let versionFile:string;
+  if(app.isPackaged) {
+    versionFile = fs.readFileSync(path.join(__dirname,'./RELEASE.json'), 'utf8');
+  } else {
+    versionFile = fs.readFileSync(path.join(__dirname, '../../package.json'), 'utf8');
+  }
+
+  console.log(versionFile);
+  const versionjson = JSON.parse(versionFile.toString());
+  const VERSION = versionjson.version;
+
   const appInfo = {
-    AppVersion: `v${packjson.version}`,
+    AppVersion: `v${VERSION}`,
     LatestAppVersion: latestAppVersion,
     Version: localInfo.Version,
     LastUpdate: localInfo.LastUpdate,

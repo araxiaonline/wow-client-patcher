@@ -6825,6 +6825,11 @@ gauge@^5.0.0:
     strip-ansi "^6.0.1"
     wide-align "^1.1.5"
 
+generate-file-webpack-plugin@^1.0.1:
+  version "1.0.1"
+  resolved "https://registry.npmjs.org/generate-file-webpack-plugin/-/generate-file-webpack-plugin-1.0.1.tgz"
+  integrity sha512-HSZjlNKQWWtIGKwm+oFvhqVYRhED3Ox21ls7XcSEb0EkUrNnzSz1GBZd6/UY+l/MbThpJyPAKNLenvWDUPhfMw==
+
 gensync@^1.0.0-beta.2:
   version "1.0.0-beta.2"
   resolved "https://registry.npmjs.org/gensync/-/gensync-1.0.0-beta.2.tgz"

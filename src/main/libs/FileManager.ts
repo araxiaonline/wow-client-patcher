@@ -223,7 +223,7 @@ export default class FileManager {
         return null; // Return null for patches that should not be removed
       })
     ).catch((error) => {
-      console.error(error);
+      throw new Error(`Failed to check if patches are patched: ${error}`);
     });
 
     const patchedInstalls = installed.filter(
