@@ -152,9 +152,8 @@ if (process.platform === 'win32') {
     versionFile = fs.readFileSync(path.join(__dirname, '../../package.json'), 'utf8');
   }
 
-  console.log(versionFile);
   const versionjson = JSON.parse(versionFile.toString());
-  const VERSION = versionjson.version;
+  const VERSION = versionjson.release;
 
   const appInfo = {
     AppVersion: `v${VERSION}`,

@@ -66,6 +66,7 @@ function WoWClientPatcher() {
     const getAppInfo = async () => {
       const data = await window.api.GetAppInfo();
 
+      console.log(data);
       setAppInfo(data);
     };
 
