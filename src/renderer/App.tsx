@@ -180,11 +180,18 @@ function WoWClientPatcher() {
   return (
     <Container maxWidth="md" sx={{ border: 0 }}>
       <div className="snowfall">
-        <Snowfall
+        {/* <Snowfall
           changeFrequency={150}
           speed={[2.5, 20]}
           wind={[2.0, 5.0]}
           color="rgba(200,220,230,0.35)"
+        /> */}
+        <Snowfall
+          changeFrequency={50}
+          speed={[1.0, 2]}
+          wind={[1.0, 1.0]}
+          color="rgba(15,90,20,0.55)"
+          snowflakeCount={50}
         />
       </div>
       <div className="wowlogo">
@@ -498,7 +505,7 @@ function WoWClientPatcher() {
           left: '30%',
           position: 'absolute',
           backgroundColor: 'rgba(0,0,0,0.70)',
-          color: 'rgba(11,207,247, 1.0)',
+          color: 'rgba(11,207,47, 1.0)',
           cursor: 'pointer',
         }} severity="info">A newer version of this launcher can be download by clicking <b>here</b></Alert> }
       </Box>

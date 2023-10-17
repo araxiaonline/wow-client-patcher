@@ -152,6 +152,9 @@ if (process.platform === 'win32') {
     versionFile = fs.readFileSync(path.join(__dirname, '../../package.json'), 'utf8');
   }
 
+  // move the bc movie over
+  await fileManager.AddMovieTBC();
+
   const versionjson = JSON.parse(versionFile.toString());
   const VERSION = versionjson.release;
 

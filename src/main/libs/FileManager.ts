@@ -465,6 +465,28 @@ export default class FileManager {
   }
 
   /**
+   * Replaces the default logo movie for a TBC movie
+   * @returns
+   */
+  async AddMovieTBC(): Promise<void> {
+    const logoMovie800 = path.join(this.dataPath, 'enUS/Interface/Cinematics/Logo_800.avi');
+    const logoMovie1024 =  path.join(this.dataPath, 'enUS/Interface/Cinematics/Logo_1024.avi');
+
+    const tbcMovie800 = path.join(this.dataPath, 'enUS/Interface/Cinematics/WOW_Intro_BC_800.avi');
+    const tbcMovie1024 = path.join(this.dataPath, 'enUS/Interface/Cinematics/WOW_Intro_BC_1024.avi');
+
+    // if the movies have already been copied exit.
+    if(fs.existsSync(`${logoMovie800}.old`)) {
+      return;
+    }
+
+    fs.moveSync(logoMovie800, `${logoMovie800}.old`);
+    fs.moveSync(logoMovie1024, `${logoMovie1024}.old`);
+    fs.copySync(tbcMovie800, logoMovie800);
+    fs.copySync(tbcMovie1024, logoMovie1024);
+  }
+
+  /**
    * This will patch the local wow.exe with a patched version of wow.exe
    */
   async PatchWowExe(): Promise<void> {
