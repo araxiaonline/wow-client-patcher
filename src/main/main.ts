@@ -199,6 +199,8 @@ function passthrough(downloader: Downloader) {
 
   downloader.on('start', (event) => {
     try {
+      console.log(event.remoteFile);
+
       mainWindow?.webContents.send(Channels.DOWNLOAD_START, {
         totalBytes: event.totalBytes,
         remoteFile: event.remoteFile

@@ -7,12 +7,11 @@ import {
   HeadObjectCommand,
   ListObjectsCommand,
 } from "@aws-sdk/client-s3";
-import fs from "fs-extra";
+import fs, {writeFileSync} from "fs-extra";
 import path from "path";
 import stream from "node:stream";
 import Emitter from "./Emitter";
 import { santizeETag } from "../util";
-
 
 export type DownloadEventMap = {
   start: {
@@ -78,6 +77,33 @@ export default class Downloader extends Emitter<DownloadEventMap> {
     this.s3 = new S3Client(params.s3config);
     this.bucket = params.bucket;
     this.root = params.root;
+  }
+
+  async getRemoteContent(remotePath: string): Promise<string | undefined> {
+    const getObjectParams = {
+      Bucket: this.bucket,
+      Key: remotePath,
+    };
+
+    const response = await this.s3.send(new GetObjectCommand(getObjectParams));
+    return response.Body?.transformToString();
+  }
+
+  async downloadFileSync(remotePath: string, localPath: string): Promise<boolean> {
+    const getObjectParams = {
+      Bucket: this.bucket,
+      Key: remotePath,
+    };
+
+    const response = await this.s3.send(new GetObjectCommand(getObjectParams));
+    const content = await response.Body?.transformToString('utf-8');
+
+    if(typeof content === 'string') {
+      writeFileSync(localPath, content);
+      return true;
+    }
+
+    return false;
   }
 
   /**

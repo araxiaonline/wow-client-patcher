@@ -1,6 +1,6 @@
 import { WowLauncher, Manifest } from 'typings';
 
-import fs from 'fs-extra';
+import fs, { existsSync, readJsonSync } from 'fs-extra';
 import path, { join } from 'path';
 import * as crypto from 'crypto';
 import AdmZip from 'adm-zip';
@@ -19,14 +19,13 @@ import config from "../config.json";
 export const HDPatchList: WowLauncher.PatchFile[] = config.patches.HDContent;
 export const MiscPatchList: WowLauncher.PatchFile[] = config.patches.misc;
 export const Reserved: WowLauncher.PatchFile[] = config.patches.reserved;
-export const Experimental: WowLauncher.PatchFile[] = config.patches.experimental;
 
 /**
  * Addons that can be installed to the client for the user
  */
 export const AddOns: WowLauncher.PatchFile[] = config.addOns;
 
-type patchGroup = 'hd' | 'misc' | 'reserved' | 'experimental';
+type patchGroup = 'hd' | 'misc' | 'reserved';
 
 const AIORemotePath = `${config.remotePaths.aio}/AIO_Client.zip`;
 const AIOLocalPath = 'Interface/AddOns/AIO_Client.zip';
@@ -85,7 +84,6 @@ export default class FileManager {
     this.allPatches = [
       ...HDPatchList,
       ...MiscPatchList,
-      ...Experimental,
     ];
     this.patchNames = this.allPatches.map((patch) => patch.name);
 
@@ -133,17 +131,25 @@ export default class FileManager {
 
     const cacheFolder = await this.GetCacheFolder();
     const downloader = this.DownloaderInstance();
-    const result = await downloader.downloadFile(
-      'version.json',
-      path.join(cacheFolder,'version.json')
-    );
-    if (!result) {
+    const content = await downloader.getRemoteContent('version.json');
+    // const result = await downloader.downloadFileSync(
+    //   'version.json',
+    //   path.join(cacheFolder,'version.json')
+    // );
+
+    if (!content) {
       throw new Error('Failed to download version file');
     }
 
-    const jsonfile = await fs.promises.readFile(path.join(this.basePath, cacheFolder, 'version.json'), 'utf8')
-    const parsed = JSON.parse(jsonfile);
+    // if(!existsSync(path.join(this.basePath, cacheFolder, 'version.json'))) {
+    //   throw new Error('No version file found');
+    // }
+
+    const parsed: any = JSON.parse(content);
     this.remoteVersions = parsed.versions as Versions;
+
+    // const parsed = await readJsonSync(path.join(this.basePath, cacheFolder, 'version.json'), 'utf8');
+    // this.remoteVersions = parsed.versions as Versions;
 
     return this.remoteVersions;
   }
@@ -274,9 +280,14 @@ export default class FileManager {
     const filemapping: { remotePath: string; localPath: string }[] = [];
     let localPath = 'Data/';
 
-    files.forEach((file) => {
+    const downloads = files.map(async (file) => {
+      const fileETag = await this.downloader.getETag(file.name);
+      const inManifest = await this.CheckManifest(file.name, fileETag);
 
-      // custom content can also include addons in the file type
+      if(inManifest) {
+        return;
+      }
+
       if(file.name.includes('addOns')) {
         localPath = 'Interface/AddOns/';
       }
@@ -286,6 +297,10 @@ export default class FileManager {
         localPath: path.join(localPath, path.basename(file.name)),
       });
     });
+
+    await Promise.all(downloads);
+
+    console.log(filemapping);
 
     downloader.on('end', async ({ file }) => {
       let baseName = 'custom/';
@@ -326,9 +341,6 @@ export default class FileManager {
         break;
       case 'misc':
         patches = await this.GetMissingMiscPatches();
-        break;
-      case 'experimental':
-        /** @TODO Future Implementation */
         break;
       default:
         patches = null;

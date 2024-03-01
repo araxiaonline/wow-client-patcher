@@ -10,14 +10,15 @@ const root = createRoot(container);
 root.render(<App />);
 
 declare const window: Window;
-const music = [bgmusic];
+const music = [bgmusiclk];
 
 const sound = new Howl({
   src: music,
   autoplay: true,
   loop: true,
   html5: true,
-  volume: 0.25,
+  volume:0.04
+
 });
 
 

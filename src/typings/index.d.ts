@@ -8,6 +8,7 @@ declare global {
    */
   interface Window {
     api: LauncherServer.Api;
+    batchCallbacks: DownloadCallbacks
   }
 }
 

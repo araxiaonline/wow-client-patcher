@@ -61,6 +61,28 @@ export default class MenuBuilder {
         ],
       },
       {
+        label: '&Actions',
+        submenu: [
+          {
+            label: 'Install HD Client',
+            click: async () => {
+              const result = await this.mainWindow.webContents.executeJavaScript(`
+                window.api.InstallHD(window.batchCallbacks);
+              `);
+            }
+          },
+          {
+            label: 'Patch WoW Exe',
+            click: async () => {
+              const result = await this.mainWindow.webContents.executeJavaScript(`
+                window.api.PatchWoW(window.batchCallbacks);
+              `);
+            }
+          }
+        ]
+
+      },
+      {
         label: '&View',
         submenu: [
           {

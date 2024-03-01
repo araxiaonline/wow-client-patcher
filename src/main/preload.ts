@@ -89,12 +89,13 @@ const IPCApi: LauncherServer.Api = {
     );
   },
   GetAppInfo: async () => {
+
     try {
       const appInfo = await ipcRenderer.invoke(Channels.APP_INFO);
       return appInfo;
     } catch (error: any) {
       const msg = `Error getting app info: ${error}`;
-      console.error(msg);
+      console.log(error);
 
       return {
         type: 'Parse',

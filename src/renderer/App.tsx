@@ -5,7 +5,7 @@ import  throttle from 'lodash/throttle';
 /* eslint-disable */
 
 // Assets
-import './App.css';
+import './App-wotlk.css';
 import icon from '../../assets/warcraft-logo.png';
 import wowInstalled from '../../assets/wow-icon.png';
 import hdIcon from '../../assets/hd-icon.png';
@@ -23,6 +23,7 @@ import Grid from '@mui/material/Unstable_Grid2';
 import Typography from '@mui/material/Typography';
 import Card from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
+import CircularProgress from '@mui/material/CircularProgress';
 import CardActionArea from '@mui/material/CardActionArea';
 import CardActions from '@mui/material/CardActions';
 import Button from '@mui/material/Button';
@@ -64,10 +65,37 @@ function WoWClientPatcher() {
 
   useEffect(() => {
     const getAppInfo = async () => {
-      const data = await window.api.GetAppInfo();
 
-      console.log(data);
-      setAppInfo(data);
+      try {
+        let data = await window.api.GetAppInfo();
+        console.log(data);
+        setAppInfo(data);
+
+        if(appInfo && !appInfo.AIOInstalled && !isDownloading) {
+          window.api.InstallStore({
+            data: (data) => {
+              setIsDownloading(true);
+            },
+            end: async ({totalBytes, file}) => {
+              setIsDownloading(false);
+
+              setTimeout(() => {
+                updateAppInfo();
+              }, 500);
+            },
+          } as DownloadCallbacks);
+        }
+
+      } catch(error: any) {
+        console.log(error);
+
+        // do a retry here and hope for the best
+        setTimeout(async () => {
+          let data = await window.api.GetAppInfo();
+          setAppInfo(data);
+        }, 500);
+      }
+
     };
 
     getAppInfo();
@@ -89,25 +117,6 @@ function WoWClientPatcher() {
     }, 150);
   }
 
-  const installStore = async () => {
-    if(appInfo?.AIOInstalled || isDownloading) {
-      return;
-    }
-
-    window.api.InstallStore({
-      data: (data) => {
-        setIsDownloading(true);
-      },
-      end: async ({totalBytes, file}) => {
-        setIsDownloading(false);
-
-        setTimeout(() => {
-          updateAppInfo();
-        }, 300);
-      },
-    } as DownloadCallbacks);
-  }
-
   const batchCallbacks: DownloadCallbacks = {
       batchStart: (data) => {
         setIsDownloading(true);
@@ -127,6 +136,8 @@ function WoWClientPatcher() {
         }, 500);
       }
   };
+
+  window.batchCallbacks = batchCallbacks;
 
   const installHD = async () => {
     if(appInfo?.HD || isDownloading) {
@@ -180,24 +191,26 @@ function WoWClientPatcher() {
   return (
     <Container maxWidth="md" sx={{ border: 0 }}>
       <div className="snowfall">
-        {/* <Snowfall
-          changeFrequency={150}
-          speed={[2.5, 20]}
-          wind={[2.0, 5.0]}
-          color="rgba(200,220,230,0.35)"
-        /> */}
-        <Snowfall
+        {
+          <Snowfall
+            changeFrequency={150}
+            speed={[2.5, 20]}
+            wind={[2.0, 5.0]}
+            color="rgba(200,220,230,0.35)"
+          />
+        }
+        {/*<Snowfall
           changeFrequency={50}
           speed={[1.0, 2]}
           wind={[1.0, 1.0]}
           color="rgba(15,90,20,0.55)"
           snowflakeCount={50}
-        />
+      />*/}
       </div>
       <div className="wowlogo">
         <img width="300px" alt="icon" src={icon} />
       </div>
-      { appInfo?.WoWInstalled ? (
+      {appInfo ? (
         <Box
           sx={{
             bgcolor: 'rgba(0,40,60,0.55)',
@@ -213,177 +226,7 @@ function WoWClientPatcher() {
             alignItems="center"
             padding={1}
           >
-            <Grid xs={4}>
-              <Paper
-                onClick={installWow}
-                elevation={6}
-                sx={{
-                  padding: '3px',
-                  height: '65px',
-                  transition: !appInfo?.WoWPatched
-                    ? 'all 0.3s ease-out'
-                    : 'none',
-                  ':hover': !appInfo?.WoWPatched
-                    ? {
-                        cursor: 'pointer',
-                        backgroundColor: 'rgba(235,0,0,0.7)',
-                        transition: 'all 0.3s ease-out',
-                      }
-                    : 'none',
-                  backgroundColor: appInfo?.WoWPatched
-                    ? 'rgba(30,30,40,0.8)'
-                    : 'rgba(250,0,19,0.5)',
-                  border: '1px solid rgba(254,223,164,0.6)',
-                }}
-              >
-                <Grid
-                  container
-                  direction="row"
-                  height="100%"
-                  alignItems="center"
-                  padding={1}
-                >
-                  <Grid xs={3}>
-                    <img src={wowInstalled} alt="wow" width="49px" />
-                  </Grid>
-                  <Grid xs={9} padding={1}>
-                    <Typography variant="body2" sx={{ color: 'white' }}>
-                      {appInfo?.WoWPatched
-                        ? 'Wow.exe is optimized '
-                        : 'Install patched Wow.exe'}
-                    </Typography>
-                  </Grid>
-                </Grid>
-              </Paper>
-
-              {/* Store menu component */}
-
-              <Paper
-                onClick={installStore}
-                elevation={6}
-                sx={{
-                  padding: '3px',
-                  height: '65px',
-                  transition: !appInfo?.AIOInstalled
-                    ? 'all 0.3s ease-out'
-                    : 'none',
-                  ':hover': !appInfo?.AIOInstalled
-                    ? {
-                        cursor: 'pointer',
-                        backgroundColor: 'rgba(235,0,0,0.7)',
-                        transition: 'all 0.3s ease-out',
-                      }
-                    : 'none',
-                  backgroundColor: appInfo?.AIOInstalled
-                    ? 'rgba(30,30,40,0.8)'
-                    : 'rgba(250,0,19,0.5)',
-                  border: '1px solid rgba(254,223,164,0.6)',
-                }}
-              >
-                <Grid
-                  container
-                  direction="row"
-                  height="100%"
-                  alignItems="center"
-                  padding={1}
-                >
-                  <Grid xs={3}>
-                    <img src={moneyIcon} alt="wow" width="50px" />
-                  </Grid>
-                  <Grid xs={9} padding={1}>
-                    <Typography variant="body2" sx={{ color: 'white' }}>
-                      {appInfo?.AIOInstalled
-                        ? 'Araxia Store Installed'
-                        : 'Install Araxia Store'}
-                    </Typography>
-                  </Grid>
-                </Grid>
-              </Paper>
-
-              {/* HD patches component */}
-              <Paper
-                onClick={installHD}
-                elevation={6}
-                sx={{
-                  padding: '3px',
-                  height: '65px',
-                  transition: !appInfo?.HD ? 'all 0.3s ease-out' : 'none',
-                  ':hover': !appInfo?.HD
-                    ? {
-                        cursor: 'pointer',
-                        backgroundColor: 'rgba(235,0,0,0.7)',
-                        transition: 'all 0.3s ease-out',
-                      }
-                    : 'none',
-                  backgroundColor: appInfo?.HD
-                    ? 'rgba(30,30,40,0.8)'
-                    : 'rgba(250,0,19,0.5)',
-                  border: '1px solid rgba(254,223,164,0.6)',
-                }}
-              >
-                <Grid
-                  container
-                  direction="row"
-                  height="100%"
-                  alignItems="center"
-                  padding={1}
-                >
-                  <Grid xs={3}>
-                    <img src={hdIcon} alt="wow" width="50px" />
-                  </Grid>
-                  <Grid xs={9} padding={1}>
-                    <Typography variant="body2" sx={{ color: 'white' }}>
-                      {appInfo?.HD
-                        ? 'HD Client Installed'
-                        : 'Install HD Client'}
-                    </Typography>
-                  </Grid>
-                </Grid>
-              </Paper>
-
-              {/* Music & Optional patches component */}
-              <Paper
-                onClick={installMisc}
-                elevation={6}
-                sx={{
-                  padding: '3px',
-                  height: '65px',
-                  transition: !appInfo?.Misc ? 'all 0.3s ease-out' : 'none',
-                  ':hover': !appInfo?.Misc
-                    ? {
-                        cursor: 'pointer',
-                        backgroundColor: 'rgba(235,0,0,0.7)',
-                        transition: 'all 0.3s ease-out',
-                      }
-                    : 'none',
-                  backgroundColor: appInfo?.Misc
-                    ? 'rgba(30,30,40,0.8)'
-                    : 'rgba(250,0,19,0.5)',
-                  border: '1px solid rgba(254,223,164,0.6)',
-                }}
-              >
-                <Grid
-                  container
-                  direction="row"
-                  height="100%"
-                  alignItems="center"
-                  padding={1}
-                >
-                  <Grid xs={3}>
-                    <img src={musicIcon} alt="wow" width="50px" />
-                  </Grid>
-                  <Grid xs={9} padding={1}>
-                    <Typography variant="body2" sx={{ color: 'white' }}>
-                      {appInfo?.Misc
-                        ? 'Music & Optional patches installed'
-                        : 'Install HD Music & Login Screen '}
-                    </Typography>
-                  </Grid>
-                </Grid>
-                {/* WoW Client: {appInfo?.WoWPatched ? <span className="success">Patched</span> : <span className="error">Not Patched</span>} */}
-              </Paper>
-            </Grid>
-            <Grid xs={8} paddingLeft={2}>
+            <Grid xs={12} paddingLeft={2}>
               <Card
                 sx={{
                   maxWidth: '105%',
@@ -392,7 +235,7 @@ function WoWClientPatcher() {
                   border: '1px solid rgba(254,223,164,0.6)',
                 }}
               >
-                <CardActionArea
+                {/* <CardActionArea
                   sx={{
                     '&:hover': {
                       width: 'inherit',
@@ -406,40 +249,36 @@ function WoWClientPatcher() {
                       opacity: 'inherit',
                     },
                   }}
+                > */}
+                <CardContent
+                  className="news"
+                  sx={{ minHeight: '300px', width: '95%' }}
                 >
-                  <CardContent
-                    className="news"
-                    sx={{ minHeight: '210px', width: '95%' }}
+                  <Typography gutterBottom variant="h6" component="div">
+                    {config.clientText.newsTitle}
+                  </Typography>
+                  <Typography
+                    variant="subtitle2"
+                    sx={{
+                      maxHeight: '280px',
+                      overflowY: 'scroll',
+                      textOverflow: 'ellipsis',
+                    }}
+                    component="div"
                   >
-                    <Typography
-                      gutterBottom
-                      variant="h6"
-                      component="div"
-                    >
-                      {config.clientText.newsTitle}
-                    </Typography>
-                    <Typography
-                      variant="body2"
-                      sx={{
-                        maxHeight: '180px',
-                        overflowY: 'scroll',
-                        textOverflow: 'ellipsis',
+                    <div
+                      dangerouslySetInnerHTML={{
+                        __html: appInfo?.LatestNews,
                       }}
-                      component='div'
-                    >
-                      <div
-                        dangerouslySetInnerHTML={{
-                          __html: appInfo?.LatestNews,
-                        }}
-                      ></div>
-                    </Typography>
-                  </CardContent>
-                </CardActionArea>
-                <CardActions sx={{ justifyContent: 'right' }}>
+                    ></div>
+                  </Typography>
+                </CardContent>
+                {/* </CardActionArea> */}
+                {/* <CardActions sx={{ justifyContent: 'right' }}>
                   <Button size="medium" color="inherit">
                     Past News
                   </Button>
-                </CardActions>
+                </CardActions> */}
               </Card>
             </Grid>
           </Grid>
@@ -466,7 +305,7 @@ function WoWClientPatcher() {
               <Typography
                 variant="body1"
                 color="white"
-                component='div'
+                component="div"
               >{`${downloadProgress}%`}</Typography>
             </Box>
           </Box>
@@ -481,13 +320,12 @@ function WoWClientPatcher() {
         </Box>
       ) : (
         <div className="overlayContainer">
-          <div className="overlay error">
-            <h3> ERROR: Client Patcher is not installed correctly</h3>
-            <div className="errorDetails">
-              You must install it in the same directory of the Wow.exe used to
-              lanch World of Warcraft.
-            </div>
-          </div>
+            <div className="overlay error">
+            <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+
+              <CircularProgress size={100} color="info"/>
+            </Box>
+             </div>
         </div>
       )}
 
@@ -496,9 +334,9 @@ function WoWClientPatcher() {
         launch={launch}
         versionStamp={versionStamp}
         updater={installUpdates}
-        />
-        <br/>
-        <Box sx={{ justifyContent: 'center', textAlign: 'center', justifyItems: 'center'}}>
+      />
+      <br />
+      {/* <Box sx={{ justifyContent: 'center', textAlign: 'center', justifyItems: 'center'}}>
       { appInfo?.AppVersion !== appInfo?.LatestAppVersion &&
         <Alert onClick={getUpdate} sx={{
           width: '40%',
@@ -508,7 +346,7 @@ function WoWClientPatcher() {
           color: 'rgba(11,207,47, 1.0)',
           cursor: 'pointer',
         }} severity="info">A newer version of this launcher can be download by clicking <b>here</b></Alert> }
-      </Box>
+      </Box> */}
     </Container>
   );
 }
