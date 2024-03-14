@@ -72,6 +72,10 @@ export default class FileManager {
   private remoteVersions: Versions = [];
   private manifestMutex: Mutex = new Mutex();
 
+  static isHDPatch(patchName: string) {
+    return HDPatchList.find((patch) => patch.name === patchName);
+  }
+
   constructor(basePath: string) {
     // This sets up all local paths for the file manager
     this.basePath = basePath;
@@ -300,10 +304,8 @@ export default class FileManager {
 
     await Promise.all(downloads);
 
-    console.log(filemapping);
-
     downloader.on('end', async ({ file }) => {
-      let baseName = 'custom/';
+      let remoteDir = 'custom/';
 
       if(file.includes('addOns')) {
         setTimeout(() => {
@@ -311,13 +313,22 @@ export default class FileManager {
           zip.extractAllTo(path.join(this.basePath, 'Interface/AddOns'), true);
         }, 200);
 
-        baseName = 'custom/addOns/';
+        remoteDir = 'custom/addOns/';
 
       }
-      const remotefile = `${baseName}${path.basename(file)}`;
-      const etag = await downloader.getETag(remotefile);
+      const baseFile = path.basename(file);
+      if(FileManager.isHDPatch(baseFile)) {
+        remoteDir = 'patches/';
+      }
 
-      this.UpdateManifest(remotefile, etag);
+
+      const remotefile = `${remoteDir}${baseFile}`;
+      try {
+        const etag = await downloader.getETag(remotefile);
+        this.UpdateManifest(remotefile, etag);
+      } catch (error) {
+        console.error(error);
+      }
     });
 
     downloader.on('batchEnd', async () => {
