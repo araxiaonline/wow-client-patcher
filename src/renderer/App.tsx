@@ -252,7 +252,7 @@ function WoWClientPatcher() {
                 > */}
                 <CardContent
                   className="news"
-                  sx={{ minHeight: '300px', width: '95%' }}
+                  sx={{ minHeight: '260px', maxHeight: '295px',width: '95%' }}
                 >
                   <Typography gutterBottom variant="h6" component="div">
                     {config.clientText.newsTitle}
@@ -313,9 +313,16 @@ function WoWClientPatcher() {
             sx={{
               display: 'flex',
               justifyContent: 'right',
+              padding: '3px',
             }}
           >
             <VersionText {...versionStamp} />
+            <LaunchButton
+               isDownloading={isDownloading}
+               launch={launch}
+               versionStamp={versionStamp}
+               updater={installUpdates}
+            />
           </Box>
         </Box>
       ) : (
@@ -329,12 +336,7 @@ function WoWClientPatcher() {
         </div>
       )}
 
-      <LaunchButton
-        isDownloading={isDownloading}
-        launch={launch}
-        versionStamp={versionStamp}
-        updater={installUpdates}
-      />
+
       <br />
       {/* <Box sx={{ justifyContent: 'center', textAlign: 'center', justifyItems: 'center'}}>
       { appInfo?.AppVersion !== appInfo?.LatestAppVersion &&
