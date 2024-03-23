@@ -136,24 +136,13 @@ export default class FileManager {
     const cacheFolder = await this.GetCacheFolder();
     const downloader = this.DownloaderInstance();
     const content = await downloader.getRemoteContent('version.json');
-    // const result = await downloader.downloadFileSync(
-    //   'version.json',
-    //   path.join(cacheFolder,'version.json')
-    // );
 
     if (!content) {
       throw new Error('Failed to download version file');
     }
 
-    // if(!existsSync(path.join(this.basePath, cacheFolder, 'version.json'))) {
-    //   throw new Error('No version file found');
-    // }
-
     const parsed: any = JSON.parse(content);
     this.remoteVersions = parsed.versions as Versions;
-
-    // const parsed = await readJsonSync(path.join(this.basePath, cacheFolder, 'version.json'), 'utf8');
-    // this.remoteVersions = parsed.versions as Versions;
 
     return this.remoteVersions;
   }
