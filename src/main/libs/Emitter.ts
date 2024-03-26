@@ -33,7 +33,4 @@ export default class Emitter<T extends EventMap> {
   emit<K extends EventKey<T>>(eventName: K, params: T[K]) {
     this.emitter.emit(eventName, params);
   }
-
 }
-
-

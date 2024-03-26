@@ -34,16 +34,16 @@ if (process.env.NODE_ENV === 'production') {
   sourceMapSupport.install();
 }
 
-const isDebug = process.env.NODE_ENV === 'development' || process.env.DEBUG_PROD === 'true';
+const isDebug =
+  process.env.NODE_ENV === 'development' || process.env.DEBUG_PROD === 'true';
 
 const createWindow = async () => {
-
-let RESOURCES_PATH: string;
-if(app.isPackaged) {
-  RESOURCES_PATH = path.join(process.resourcesPath, 'assets');
-} else {
-  RESOURCES_PATH = path.join(__dirname, '../../assets');
-}
+  let RESOURCES_PATH: string;
+  if (app.isPackaged) {
+    RESOURCES_PATH = path.join(process.resourcesPath, 'assets');
+  } else {
+    RESOURCES_PATH = path.join(__dirname, '../../assets');
+  }
 
   const getAssetPath = (...paths: string[]): string => {
     return path.join(RESOURCES_PATH, ...paths);
@@ -58,8 +58,8 @@ if(app.isPackaged) {
       preload: app.isPackaged
         ? path.join(__dirname, 'preload.js')
         : path.join(__dirname, '../../.erb/dll/preload.js'),
-        nodeIntegration: false,
-        sandbox: false
+      nodeIntegration: false,
+      sandbox: false,
     },
   });
 
@@ -80,7 +80,6 @@ if(app.isPackaged) {
     mainWindow = null;
   });
 
-
   const menuBuilder = new MenuBuilder(mainWindow);
   menuBuilder.buildMenu();
 
@@ -89,7 +88,6 @@ if(app.isPackaged) {
     shell.openExternal(edata.url);
     return { action: 'deny' };
   });
-
 };
 
 app
@@ -108,33 +106,31 @@ app
   })
   .catch(console.log);
 
-  /** ************************************************
-   * Event Management for IPC
-   ************************************************* */
+/** ************************************************
+ * Event Management for IPC
+ ************************************************* */
 // loads the application path where the exe is run, this is needed to lookup information about the installed patches.
 let appPath: string;
 let fileManager: FileManager;
 const autoUpdater = new AutoUpdate();
 
 if (process.platform === 'win32') {
-  if(process.env.PORTABLE_EXECUTABLE_DIR) {
-    appPath = path.join(process.env.PORTABLE_EXECUTABLE_DIR, 'Wow.exe')
-    fileManager = new FileManager(process.env.PORTABLE_EXECUTABLE_DIR || '')
+  if (process.env.PORTABLE_EXECUTABLE_DIR) {
+    appPath = path.join(process.env.PORTABLE_EXECUTABLE_DIR, 'Wow.exe');
+    fileManager = new FileManager(process.env.PORTABLE_EXECUTABLE_DIR || '');
   } else {
-    appPath = path.join(__dirname, '../../mockGame','Wow.exe');
+    appPath = path.join(__dirname, '../../mockGame', 'Wow.exe');
     fileManager = new FileManager(path.join(__dirname, '../../mockGame'));
   }
-
 } else {
   appPath = '/System/Applications/Chess.app';
   fileManager = new FileManager(path.join(__dirname, '../../dist/')); // will handle macs even though we will never be building for one.
 }
 
-
 /**
  * This will return all the information of the file system installed in the directory.
  */
- ipcMain.handle(Channels.APP_INFO, async () => {
+ipcMain.handle(Channels.APP_INFO, async () => {
   const version = await fileManager.GetVersion();
 
   // Get the news and convert it to html
@@ -145,11 +141,17 @@ if (process.platform === 'win32') {
   const localInfo = await fileManager.GetVersion();
   const latestAppVersion = await autoUpdater.getLatestVersion();
 
-  let versionFile:string;
-  if(app.isPackaged) {
-    versionFile = fs.readFileSync(path.join(__dirname,'./RELEASE.json'), 'utf8');
+  let versionFile: string;
+  if (app.isPackaged) {
+    versionFile = fs.readFileSync(
+      path.join(__dirname, './RELEASE.json'),
+      'utf8'
+    );
   } else {
-    versionFile = fs.readFileSync(path.join(__dirname, '../../package.json'), 'utf8');
+    versionFile = fs.readFileSync(
+      path.join(__dirname, '../../package.json'),
+      'utf8'
+    );
   }
 
   // move the bc movie over
@@ -177,17 +179,11 @@ if (process.platform === 'win32') {
   return appInfo;
 });
 
-(async () => {
-
-  // const remoteInfo = await fileManager.GetRemoteVersion();
-  // const custom = await fileManager.GetCustomFiles();
-  // console.log(custom);
-
-})();
-
 ipcMain.on(Channels.GET_UPDATE, async (event, arg) => {
   const latestAppVersion = await autoUpdater.getLatestVersion();
-  shell.openExternal(`https://github.com/araxiaonline/wow-client-patcher/releases/tag/${latestAppVersion}`);
+  shell.openExternal(
+    `https://github.com/araxiaonline/wow-client-patcher/releases/tag/${latestAppVersion}`
+  );
 });
 
 /**
@@ -196,19 +192,17 @@ ipcMain.on(Channels.GET_UPDATE, async (event, arg) => {
  * @param downloader
  */
 function passthrough(downloader: Downloader) {
-
   downloader.on('start', (event) => {
     try {
       console.log(event.remoteFile);
 
       mainWindow?.webContents.send(Channels.DOWNLOAD_START, {
         totalBytes: event.totalBytes,
-        remoteFile: event.remoteFile
+        remoteFile: event.remoteFile,
       });
     } catch (error: any) {
       console.log(error.message);
     }
-
   });
   downloader.on('data', (event) => {
     mainWindow?.webContents.send(Channels.DOWNLOAD_PROGRESS, event);
@@ -220,7 +214,7 @@ function passthrough(downloader: Downloader) {
     mainWindow?.webContents.send(Channels.DOWNLOAD_BATCH_START, event);
   });
   downloader.on('batchData', (event) => {
-      mainWindow?.webContents.send(Channels.DOWNLOAD_BATCH_DATA, event);
+    mainWindow?.webContents.send(Channels.DOWNLOAD_BATCH_DATA, event);
   });
   downloader.on('batchEnd', (event) => {
     mainWindow?.webContents.send(Channels.DOWNLOAD_BATCH_END, event);
@@ -230,59 +224,59 @@ function passthrough(downloader: Downloader) {
 /**
  * Main Calls to backend Filemanager
  */
-ipcMain.handle(Channels.APP_API, async (event, method: LauncherServer.Methods, ...args)  => {
-
-  switch (method) {
-    case 'GetInstalledPatches': {
-      // return await fileManager.GetInstalledPatches(args[0]);
-      break;
-    }
-    case 'InstallAIO': {
-      const result = await fileManager.InstallAIO();
-
-      if(result instanceof Downloader) {
-         passthrough(result);
+ipcMain.handle(
+  Channels.APP_API,
+  async (event, method: LauncherServer.Methods, ...args) => {
+    switch (method) {
+      case 'GetInstalledPatches': {
+        // return await fileManager.GetInstalledPatches(args[0]);
+        break;
       }
-      break;
-    }
-    case 'PatchWow': {
-      const result = await fileManager.PatchWowExe();
-      return true;
-    }
+      case 'InstallAIO': {
+        const result = await fileManager.InstallAIO();
 
-    case 'InstallHD': {
-      const result = await fileManager.InstallPatches('hd');
-
-      if(result instanceof Downloader) {
-        passthrough(result);
+        if (result instanceof Downloader) {
+          passthrough(result);
+        }
+        break;
       }
-      break;
-    }
-    case 'InstallMisc': {
-      const result = await fileManager.InstallPatches('misc');
-
-      if(result instanceof Downloader) {
-        passthrough(result);
+      case 'PatchWow': {
+        const result = await fileManager.PatchWowExe();
+        return true;
       }
-      break;
-    }
-    case 'InstallUpdates': {
-      const result = await fileManager.InstallUpdates();
 
-      if(result instanceof Downloader) {
-        passthrough(result);
+      case 'InstallHD': {
+        const result = await fileManager.InstallPatches('hd');
+
+        if (result instanceof Downloader) {
+          passthrough(result);
+        }
+        break;
       }
-      break;
-    }
-    default:
-      log.error(`Unknown method: ${method}`);
-      break;
+      case 'InstallMisc': {
+        const result = await fileManager.InstallPatches('misc');
 
+        if (result instanceof Downloader) {
+          passthrough(result);
+        }
+        break;
+      }
+      case 'InstallUpdates': {
+        const result = await fileManager.InstallUpdates();
+
+        if (result instanceof Downloader) {
+          passthrough(result);
+        }
+        break;
+      }
+      default:
+        log.error(`Unknown method: ${method}`);
+        break;
+    }
+
+    return null;
   }
-
-  return null;
-});
-
+);
 
 ipcMain.on(Channels.WOW_LAUNCH, (event, arg) => {
   if (!fs.existsSync(appPath)) {
@@ -290,16 +284,18 @@ ipcMain.on(Channels.WOW_LAUNCH, (event, arg) => {
       type: 'FileError',
       message: `WoW application not found or permissions are not set to readable: ${appPath}`,
     } as ErrorEvent);
-    console.error(`WoW application not found or permissions are not set to readable: ${appPath}`);
+    console.error(
+      `WoW application not found or permissions are not set to readable: ${appPath}`
+    );
   }
 
-  if(!app.isPackaged) {
+  if (!app.isPackaged) {
     // appPath = "C:\\Users\\benca\\Desktop\\WoW\\WorldOfWarcraft_3.3.5a-unpatched\\Wow.exe";
   }
 
   console.log(`Launching WoW client: ${appPath}`);
   const childProcess = spawn(appPath, {
-    detached: true
+    detached: true,
   });
 
   childProcess.on('close', (code) => {
@@ -313,7 +309,4 @@ ipcMain.on(Channels.WOW_LAUNCH, (event, arg) => {
   setTimeout(() => {
     mainWindow?.close();
   }, 1000);
-
 });
-
-
